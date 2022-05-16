@@ -2,9 +2,9 @@
 
 Unfortunately, Google Scholar does not support exporting results... I needed the most cited papers for a university research project, and after trying [a imperfect script](https://github.com/WittmannF/sort-google-scholar) I decided to write my own. Therefore, perfectionist is the philosophy of the project :see_no_evil:
 
-<b>Important note</b>: The average time to scrape all the 100 pages of results is around 2 minutes. The reason is that we don't like to solve the captcha, so we have to act like a human!
+<b>Important note</b>: The average time to scrape all the 100 pages of results is around 60 seconds. The reason is that we don't like to solve the captcha, so we have to act like a human! Changing IP address sometimes is a good idea :weary:
 
-![A baby is looking at the book curiously!](https://media.giphy.com/media/8dYmJ6Buo3lYY/giphy.gif)
+![A mind-blowing occurs!](https://media.giphy.com/media/3o8dFn5CXJlCV9ZEsg/giphy.gif)
 
 ### Features
 
@@ -33,7 +33,7 @@ Customize the date range:
 python core.py "metaverse" -s 1997 -e 2018
 ```
 
-Limit the languages:
+Limit the languages to one or more:
 
 ```bash
 python core.py "metaverse" -l en es zh-tw
@@ -45,10 +45,10 @@ Search for case law:
 python core.py "privacy" -c
 ```
 
-Set the output file:
+Set the output file path:
 
 ```bash
-python core.py "machine learning" -s 2002 -o exports/ml_most_cited_papers_since_2002.csv
+python core.py "machine learning" -s 2002 -o exports/most_cited_ml_articles_since_2002.csv
 ```
 
 ### License

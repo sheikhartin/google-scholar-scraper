@@ -11,6 +11,7 @@ class GoogleScholarScraper:
 
     def _search_by_params(self, **kwargs) -> list:
         """Searches and returns all the articles."""
+        # Build the search query by the parameters
         keywords = f'q={kwargs.get("keywords").replace(" ", "+")}'
         year_range = f'as_ylo={kwargs.get("start_year")}&as_yhi={kwargs.get("end_year")}'
         languages = f'lr={"|".join([f"lang_{l}" for l in kwargs.get("languages")])}'
@@ -27,7 +28,7 @@ class GoogleScholarScraper:
                 print('No more results.')
                 break
             all_results.extend(page_results)
-            sleep(.38)  # Act like a human to make sure we don't get blocked
+            sleep(.5)  # Act like a human to make sure we don't get blocked...
 
         return all_results
 
@@ -37,8 +38,11 @@ class GoogleScholarScraper:
         articles = []
 
         for result in all_results:
-            title = result.find('h3.gs_rt', first=True).text
-            authors = result.find('div.gs_a', first=True).text.split('\xa0')[0]
+            title = result.find('h3.gs_rt', first=True)
+            title = title.find('a', first=True).text if title.find('a', first=True) is not None else title.find('span')[-1].text
+            authors = result.find('div.gs_a', first=True).text.split('-')[0].replace('\xa0', '')
+            year = [x.strip()[-4:] for x in result.find('div.gs_a', first=True).text.split('-') if x.strip()[-4:].isnumeric()]
+            year = int(year[0]) if year else 'N/A'
             source = result.find('h3.gs_rt a', first=True)
             source = source.attrs['href'] if source is not None else 'N/A'
             paper = result.find('div.gs_or_ggsm a', first=True)
@@ -46,14 +50,17 @@ class GoogleScholarScraper:
             citations = result.find('div.gs_ri div.gs_fl a')
             citations = int(citations[2].text.replace('Cited by ', '')) if citations[2].text.startswith('Cited by ') else 0
             articles.append({
-                'title': title,
-                'authors': authors,
-                'source': source,
-                'paper': paper,
-                'citations': citations,
+                'Title': title,
+                'Authors': authors,
+                'Year': year,
+                'Source': source,
+                'Paper': paper,
+                'Citations': citations,
             })
 
-        return pd.DataFrame(articles).sort_values(by='citations', ascending=False) if articles else pd.DataFrame()
+        if not articles:  # We could use a condition after recieving the results, but...
+            return pd.DataFrame()
+        return pd.DataFrame(articles).sort_values(by='Citations', ascending=False)
 
     def get_case_law(self, **kwargs) -> pd.DataFrame:
         """Gets the case law and sorts them by citation count."""
@@ -61,20 +68,26 @@ class GoogleScholarScraper:
         case_law = []
 
         for result in all_results:
-            title = result.find('h3.gs_rt', first=True).text
-            court = ' - '.join(result.find('div.gs_a', first=True).text.replace('\xa0', ' ').split(' - ')[:2])
+            title = result.find('h3.gs_rt', first=True)
+            title = title.find('a', first=True).text if title.find('a', first=True) is not None else title.find('span')[-1].text
+            court = result.find('div.gs_a', first=True).text.split('-')[0].replace('\xa0', '')
+            year = [x.strip()[-4:] for x in result.find('div.gs_a', first=True).text.split('-') if x.strip()[-4:].isnumeric()]
+            year = int(year[0]) if year else 'N/A'
             source = result.find('h3.gs_rt a', first=True)
             source = f'https://scholar.google.com{source.attrs["href"]}' if source is not None else 'N/A'
             citations = result.find('div.gs_ri div.gs_fl a')
             citations = int(citations[2].text.replace('Cited by ', '')) if citations[2].text.startswith('Cited by ') else 0
             case_law.append({
-                'title': title,
-                'court': court,
-                'source': source,
-                'citations': citations,
+                'Title': title,
+                'Court': court,
+                'Year': year,
+                'Source': source,
+                'Citations': citations,
             })
 
-        return pd.DataFrame(case_law).sort_values(by='citations', ascending=False) if case_law else pd.DataFrame()
+        if not case_law:
+            return pd.DataFrame()
+        return pd.DataFrame(case_law).sort_values(by='Citations', ascending=False)
 
 
 if __name__ == '__main__':
