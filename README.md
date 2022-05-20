@@ -2,16 +2,20 @@
 
 Unfortunately, Google Scholar does not support exporting results... I needed the most cited papers for a university research project, and after trying [a imperfect script](https://github.com/WittmannF/sort-google-scholar) I decided to write my own. Therefore, perfectionist is the philosophy of the project :see_no_evil:
 
-<b>Important note</b>: The average time to scrape all the 100 pages of results is around 60 seconds. The reason is that we don't like to solve the captcha, so we have to act like a human! Changing IP address sometimes is a good idea :weary:
-
-![A mind-blowing occurs!](https://media.giphy.com/media/3o8dFn5CXJlCV9ZEsg/giphy.gif)
+<b>Important note</b>: The crawler don't send more than 2 requests per second to Google Scholar. The reason is that we don't like to solve the CAPTCHA, so it's better to wait a little bit and acting like a human. Changing IP address sometimes is a good idea :weary:
 
 ### Features
 
 - [x] Supports multiple languages
-- [x] Searches for articles and case law
 - [x] Customizable date range
+- [x] Sorts by number of citations
+- [x] Sorts by year
+- [x] Searches for articles
+- [x] Searches for case law
+- [x] Searches in a profile by ID
 - [ ] Graphical interface
+
+![A shocked skeleton!](https://media.giphy.com/media/MuTenSRsJ7TQQ/giphy.gif)
 
 ### Usage
 
@@ -36,7 +40,19 @@ python core.py "metaverse" -s 1997 -e 2018
 Limit the languages to one or more:
 
 ```bash
-python core.py "metaverse" -l en es zh-tw
+python core.py "medical" -l en es zh-tw fr
+```
+
+Set the output file path:
+
+```bash
+python core.py "machine learning" -s 2002 -o exports/most_cited_ml_articles_since_2002.csv
+```
+
+Sort the output by year:
+
+```bash
+python core.py "oceanography" -y
 ```
 
 Search for case law:
@@ -45,11 +61,19 @@ Search for case law:
 python core.py "privacy" -c
 ```
 
-Set the output file path:
+Get a specific profile articles by the user ID:
 
 ```bash
-python core.py "machine learning" -s 2002 -o exports/most_cited_ml_articles_since_2002.csv
+python core.py "nms69lqaaaaj" -p -o jeff_dean_articles.csv
 ```
+
+Make the program quit:
+
+```bash
+python core.py "philosophy" -e 1234 -q
+```
+
+[Here](exports) is some example exports to see if the scraper meets your needs or not!
 
 ### License
 
