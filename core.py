@@ -8,7 +8,7 @@ from base import Spider
 
 
 def build_query(**kwargs) -> str:
-    """Builds the query string from the keyword arguments."""
+    """Builds the articles and case law query from the given arguments."""
     keywords = f'q={kwargs.get("keywords").replace(" ", "+")}'
     year_range = f'as_ylo={kwargs.get("start_year")}&as_yhi={kwargs.get("end_year")}'
     languages = f'lr={"|".join([f"lang_{l}" for l in kwargs.get("languages")])}'
@@ -18,16 +18,14 @@ def build_query(**kwargs) -> str:
 class GSArticlesSpider(Spider):
     """Google Scholar articles category spider."""
 
-    name = 'Google Scholar articles'
+    # name = 'Google Scholar articles spider'
     requests_delay = .5
 
     def setup(self, *args, **kwargs):
-        """Setups the scraper before scraping."""
         query = build_query(**kwargs, extra='as_sdt=0,5')
         self.start_urls.append(f'https://scholar.google.com/scholar?{query}')
 
     def parse(self, response: HTMLSession) -> Generator[dict, None, None]:
-        """Parses the response."""
         articles = response.html.xpath('//div[@class="gs_r gs_or gs_scl"]')
         for article in articles:
             title = article.xpath('//h3[@class="gs_rt"]/a | .//h3[@class="gs_rt"]/span[2]', first=True).text
@@ -60,16 +58,14 @@ class GSArticlesSpider(Spider):
 class GSCaseLawSpider(Spider):
     """Google Scholar case law category spider."""
 
-    name = 'Google Scholar case law'
+    # name = 'Google Scholar case law spider'
     requests_delay = .5
 
     def setup(self, *args, **kwargs):
-        """Setups the scraper before scraping."""
         query = build_query(**kwargs, extra='as_sdt=2006')
         self.start_urls.append(f'https://scholar.google.com/scholar?{query}')
 
     def parse(self, response: HTMLSession) -> Generator[dict, None, None]:
-        """Parses the response."""
         articles = response.html.xpath('//div[@class="gs_r gs_or gs_scl"]')
         for article in articles:
             title = article.xpath('//h3[@class="gs_rt"]/a | .//h3[@class="gs_rt"]/span[2]', first=True).text
@@ -102,17 +98,15 @@ class GSCaseLawSpider(Spider):
 class GSProfilesSpider(Spider):
     """Google Scholar profiles category spider."""
 
-    name = 'Google Scholar profiles'
+    # name = 'Google Scholar profiles spider'
     requests_delay = .5
 
     def setup(self, *args, **kwargs):
-        """Setups the scraper before scraping."""
         query = f'hl=en&user={kwargs.get("keywords")}&cstart=0&pagesize=100'
         self.start_urls.append(f'https://scholar.google.com/citations?{query}')
         self.cstart = 0
 
     def parse(self, response: HTMLSession) -> Generator[dict, None, None]:
-        """Parses the response."""
         articles = response.html.xpath('//tr[@class="gsc_a_tr"]')
         for article in articles:
             title = article.xpath('//a[@class="gsc_a_at"]', first=True).text
@@ -177,12 +171,12 @@ if __name__ == '__main__':
         gs_spider = GSArticlesSpider()
 
     gs_spider.setup(**params)
-    results = pd.DataFrame(gs_spider.scrape())
+    results = pd.DataFrame(gs_spider.fetch())
     if args.year:
-        results.sort_values('year', inplace=True)
+        results.sort_values('year', ascending=False, inplace=True)
     else:
-        results.sort_values('citations no.', inplace=True)
-    results[['year', 'citations no.']] = results[['year', 'citations no.']].fillna(value='n/a')
+        results.sort_values('citations no.', ascending=False, inplace=True)
+    # results[['year', 'citations no.']] = results[['year', 'citations no.']].fillna('n/a')
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     results.to_csv(args.output, index=False)
