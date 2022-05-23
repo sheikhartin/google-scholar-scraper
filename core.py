@@ -1,112 +1,188 @@
 #!/usr/bin/env python
 
-from time import sleep
+from typing import Generator
 
-import pandas as pd
 from requests_html import HTMLSession
 
+from base import Spider
 
-class GoogleScholarScraper:
-    """Scrapes Google Scholar for articles and case law."""
 
-    def _search_by_params(self, **kwargs) -> list:
-        """Searches and returns all the articles."""
-        # Build the search query by the parameters
-        keywords = f'q={kwargs.get("keywords").replace(" ", "+")}'
-        year_range = f'as_ylo={kwargs.get("start_year")}&as_yhi={kwargs.get("end_year")}'
-        languages = f'lr={"|".join([f"lang_{l}" for l in kwargs.get("languages")])}'
-        query = f'hl=en&{keywords}&{year_range}&{languages}&{kwargs.get("extra", "")}'
+def build_query(**kwargs) -> str:
+    """Builds the query string from the keyword arguments."""
+    keywords = f'q={kwargs.get("keywords").replace(" ", "+")}'
+    year_range = f'as_ylo={kwargs.get("start_year")}&as_yhi={kwargs.get("end_year")}'
+    languages = f'lr={"|".join([f"lang_{l}" for l in kwargs.get("languages")])}'
+    return f'hl=en&{keywords}&{year_range}&{languages}&{kwargs.get("extra", "")}'
 
-        session = HTMLSession()
-        all_results = []
 
-        for i in range(100):  # Each page has 10 results and there are 100 pages
-            print(f'Scraping page {i+1}...')
-            response = session.get(f'https://scholar.google.com/scholar?{query}&start={i*10}')
-            page_results = response.html.find('div.gs_r.gs_or.gs_scl')
-            if len(page_results) < 10:  # It's the last page of results
-                print('No more results.')
-                break
-            all_results.extend(page_results)
-            sleep(.5)  # Act like a human to make sure we don't get blocked...
+class GSArticlesSpider(Spider):
+    """Google Scholar articles category spider."""
 
-        return all_results
+    name = 'Google Scholar articles'
+    requests_delay = .5
 
-    def get_articles(self, **kwargs) -> pd.DataFrame:
-        """Gets the articles and sorts them by citation count."""
-        all_results = self._search_by_params(**kwargs, extra='as_sdt=0,5')
-        articles = []
+    def setup(self, *args, **kwargs):
+        """Setups the scraper before scraping."""
+        query = build_query(**kwargs, extra='as_sdt=0,5')
+        self.start_urls.append(f'https://scholar.google.com/scholar?{query}')
 
-        for result in all_results:
-            title = result.find('h3.gs_rt', first=True)
-            title = title.find('a', first=True).text if title.find('a', first=True) is not None else title.find('span')[-1].text
-            authors = result.find('div.gs_a', first=True).text.split('-')[0].replace('\xa0', '')
-            year = [x.strip()[-4:] for x in result.find('div.gs_a', first=True).text.split('-') if x.strip()[-4:].isnumeric()]
-            year = int(year[0]) if year else 'N/A'
-            source = result.find('h3.gs_rt a', first=True)
-            source = source.attrs['href'] if source is not None else 'N/A'
-            paper = result.find('div.gs_or_ggsm a', first=True)
-            paper = paper.attrs['href'] if paper is not None else 'N/A'
-            citations = result.find('div.gs_ri div.gs_fl a')
-            citations = int(citations[2].text.replace('Cited by ', '')) if citations[2].text.startswith('Cited by ') else 0
-            articles.append({
-                'Title': title,
-                'Authors': authors,
-                'Year': year,
-                'Source': source,
-                'Paper': paper,
-                'Citations': citations,
-            })
+    def parse(self, response: HTMLSession) -> Generator[dict, None, None]:
+        """Parses the response."""
+        articles = response.html.xpath('//div[@class="gs_r gs_or gs_scl"]')
+        for article in articles:
+            title = article.xpath('//h3[@class="gs_rt"]/a | .//h3[@class="gs_rt"]/span[2]', first=True).text
+            metadata = article.xpath('//div[@class="gs_a"]', first=True).text
+            metadata = list(map(lambda x: x.strip(), metadata.replace('\xa0', '').split('- ')))
+            authors = metadata[0]
+            year = metadata[1][-4:]
+            year = int(year) if len(year) == 4 and year.isnumeric() else None
+            source = article.xpath('//h3[@class="gs_rt"]/a/@href', first=True)
+            paper = article.xpath('//div[@class="gs_or_ggsm"]/a/@href', first=True)
+            citations_no = article.xpath('//div[@class="gs_ri"]/div[@class="gs_fl"]/a[3][contains(., "Cited by")]', first=True)
+            citations_no = int(citations_no.text.replace('Cited by ', '')) if citations_no is not None else 0
 
-        if not articles:  # We could use a condition after recieving the results, but...
-            return pd.DataFrame()
-        return pd.DataFrame(articles).sort_values(by='Citations', ascending=False)
+            yield {
+                'title': title,
+                'authors': authors,
+                'year': year,
+                'source': source,
+                'paper': paper,
+                'citations no.': citations_no,
+            }
 
-    def get_case_law(self, **kwargs) -> pd.DataFrame:
-        """Gets the case law and sorts them by citation count."""
-        all_results = self._search_by_params(**kwargs, extra='as_sdt=2006')
-        case_law = []
+        next_page = response.html.xpath('//div[@id="gs_res_ccl_bot"]//td[@align="left"]/a/@href', first=True)
+        if next_page is not None:
+            next_page_url = f'https://scholar.google.com{next_page}'
+            print(f'Next page found at {next_page_url}')
+            self.extra_urls.append(next_page_url)
 
-        for result in all_results:
-            title = result.find('h3.gs_rt', first=True)
-            title = title.find('a', first=True).text if title.find('a', first=True) is not None else title.find('span')[-1].text
-            court = result.find('div.gs_a', first=True).text.split('-')[0].replace('\xa0', '')
-            year = [x.strip()[-4:] for x in result.find('div.gs_a', first=True).text.split('-') if x.strip()[-4:].isnumeric()]
-            year = int(year[0]) if year else 'N/A'
-            source = result.find('h3.gs_rt a', first=True)
-            source = f'https://scholar.google.com{source.attrs["href"]}' if source is not None else 'N/A'
-            citations = result.find('div.gs_ri div.gs_fl a')
-            citations = int(citations[2].text.replace('Cited by ', '')) if citations[2].text.startswith('Cited by ') else 0
-            case_law.append({
-                'Title': title,
-                'Court': court,
-                'Year': year,
-                'Source': source,
-                'Citations': citations,
-            })
 
-        if not case_law:
-            return pd.DataFrame()
-        return pd.DataFrame(case_law).sort_values(by='Citations', ascending=False)
+class GSCaseLawSpider(Spider):
+    """Google Scholar case law category spider."""
+
+    name = 'Google Scholar case law'
+    requests_delay = .5
+
+    def setup(self, *args, **kwargs):
+        """Setups the scraper before scraping."""
+        query = build_query(**kwargs, extra='as_sdt=2006')
+        self.start_urls.append(f'https://scholar.google.com/scholar?{query}')
+
+    def parse(self, response: HTMLSession) -> Generator[dict, None, None]:
+        """Parses the response."""
+        articles = response.html.xpath('//div[@class="gs_r gs_or gs_scl"]')
+        for article in articles:
+            title = article.xpath('//h3[@class="gs_rt"]/a | .//h3[@class="gs_rt"]/span[2]', first=True).text
+            metadata = article.xpath('//div[@class="gs_a"]', first=True).text
+            metadata = list(map(lambda x: x.strip(), metadata.replace('\xa0', '').split('- ')))
+            year = metadata[1][-4:]
+            year = int(year) if len(year) == 4 and year.isnumeric() else None
+            case = ' - '.join(metadata[:2]) if len(metadata) > 1 else metadata[0]
+            case = case[:-6] if year is not None else case
+            source = article.xpath('//h3[@class="gs_rt"]/a/@href', first=True)
+            source = f'https://scholar.google.com{source}' if source is not None else None
+            citations_no = article.xpath('//div[@class="gs_ri"]/div[@class="gs_fl"]/a[3][contains(., "Cited by")]', first=True)
+            citations_no = int(citations_no.text.replace('Cited by ', '')) if citations_no is not None else 0
+
+            yield {
+                'title': title,
+                'case': case,
+                'year': year,
+                'source': source,
+                'citations no.': citations_no,
+            }
+
+        next_page = response.html.xpath('//div[@id="gs_res_ccl_bot"]//td[@align="left"]/a/@href', first=True)
+        if next_page is not None:
+            next_page_url = f'https://scholar.google.com{next_page}'
+            print(f'Next page found at {next_page_url}')
+            self.extra_urls.append(next_page_url)
+
+
+class GSProfilesSpider(Spider):
+    """Google Scholar profiles category spider."""
+
+    name = 'Google Scholar profiles'
+    requests_delay = .5
+
+    def setup(self, *args, **kwargs):
+        """Setups the scraper before scraping."""
+        query = f'hl=en&user={kwargs.get("keywords")}&cstart=0&pagesize=100'
+        self.start_urls.append(f'https://scholar.google.com/citations?{query}')
+        self.cstart = 0
+
+    def parse(self, response: HTMLSession) -> Generator[dict, None, None]:
+        """Parses the response."""
+        articles = response.html.xpath('//tr[@class="gsc_a_tr"]')
+        for article in articles:
+            title = article.xpath('//a[@class="gsc_a_at"]', first=True).text
+            authors = article.xpath('//div[@class="gs_gray"][1]', first=True).text
+            source = article.xpath('//a[@class="gsc_a_at"]/@href', first=True)
+            source = f'https://scholar.google.com{source}' if source is not None else None
+            year = article.xpath('//span[@class="gsc_a_h gsc_a_hc gs_ibl"]/text()', first=True)
+            citations_no = article.xpath('//a[@class="gsc_a_ac gs_ibl"]', first=True)
+            citations_no = int(citations_no.text) if citations_no is not None and citations_no.text else 0
+
+            yield {
+                'title': title,
+                'authors': authors,
+                'source': source,
+                'year': year,
+                'citations no.': citations_no,
+            }
+
+        next_page = response.html.xpath('//button[@class="gs_btnPD gs_in_ib gs_btn_flat gs_btn_lrge gs_btn_lsu"]', first=True)
+        if next_page.attrs.get('disabled') is None:
+            current_page_url = response.url
+            next_page_url = current_page_url.replace(f'cstart={self.cstart}', f'cstart={self.cstart+100}')
+            self.cstart += 100
+            print(f'Next articles found at {next_page_url}')
+            self.extra_urls.append(next_page_url)
 
 
 if __name__ == '__main__':
+    import os
+    import sys
     import argparse
     from pathlib import Path
 
-    parser = argparse.ArgumentParser(description='Scrape Google Scholar for articles and case law.')
+    import pandas as pd
+
+    parser = argparse.ArgumentParser(description='Scrapes Google Scholar for articles, case law, and profiles.')
     parser.add_argument('keywords', type=str, help='The keywords to search for')
     parser.add_argument('-c', '--case-law', action='store_true', help='Search for case law')
+    parser.add_argument('-p', '--profiles', action='store_true', help='Search for a profile articles')
     parser.add_argument('-s', '--start-year', type=int, help='The start year')
     parser.add_argument('-e', '--end-year', type=int, help='The end year')
     parser.add_argument('-l', '--languages', nargs='+', default=['en'], help='Allowed languages (default: en)')
     parser.add_argument('-o', '--output', type=str, default='output.csv', help='The output file (default: output.csv)')
+    parser.add_argument('-y', '--year', action='store_true', help='Sort by year')
+    parser.add_argument('-q', '--quiet', action='store_true', help='Do not print progress')
     args = parser.parse_args()
 
-    gs_scraper = GoogleScholarScraper()
-    params = dict(keywords=args.keywords, start_year=args.start_year, end_year=args.end_year, languages=args.languages)
-    results = gs_scraper.get_articles(**params) if not args.case_law else gs_scraper.get_case_law(**params)
+    if args.quiet:
+        sys.stdout = open(os.devnull, 'w')
+    params = {
+        'keywords': args.keywords,
+        'start_year': args.start_year,
+        'end_year': args.end_year,
+        'languages': args.languages,
+    }
+
+    if args.case_law:
+        gs_spider = GSCaseLawSpider()
+    elif args.profiles:
+        gs_spider = GSProfilesSpider()
+    else:
+        gs_spider = GSArticlesSpider()
+
+    gs_spider.setup(**params)
+    results = pd.DataFrame(gs_spider.scrape())
+    if args.year:
+        results.sort_values('year', inplace=True)
+    else:
+        results.sort_values('citations no.', inplace=True)
+    results[['year', 'citations no.']] = results[['year', 'citations no.']].fillna(value='n/a')
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     results.to_csv(args.output, index=False)
-    print(f'\nAll done! {len(results)} results found and successfully saved to `{args.output}` file.')
