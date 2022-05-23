@@ -20,7 +20,7 @@ class Spider:
     requests_delay: Optional[float] = None
 
     def __init__(self) -> None:
-        self.name = self.name
+        self.name = self.name if self.name is not None else self.__class__.__name__
         self.start_urls = self.start_urls if self.start_urls is not None else []
         self.extra_urls = self.extra_urls if self.extra_urls is not None else []
         self.requests_delay = self.requests_delay if self.requests_delay is not None else 0
@@ -36,15 +36,15 @@ class Spider:
         return self.start_urls == other.start_urls and self.extra_urls == other.extra_urls
 
     def setup(self, *args, **kwargs) -> None:
-        """Setups the scraper before scraping."""
+        """Setups the spiders before starting."""
         if kwargs.get('start_urls') is not None:
             self.start_urls = kwargs.get('start_urls')
         if kwargs.get('extra_urls') is not None:
             self.extra_urls = kwargs.get('extra_urls')
 
-    def scrape(self) -> Generator[list[dict], None, None]:
-        """Scrapes between all the specified URLs."""
-        print(f'Scraping started for {self.name}...')
+    def fetch(self) -> Generator[list[dict], None, None]:
+        """Goes between all the specified URLs."""
+        print(f'{self.name} started...')
         requests_count = 0
 
         for url in self.start_urls:
@@ -63,7 +63,7 @@ class Spider:
                 yield item
             sleep(self.requests_delay)
 
-        print('Scraping finished!')
+        print('Done!')
 
     def parse(self, response: HTMLSession) -> Generator[Any, None, None]:
         """Parses the response and yields items."""
