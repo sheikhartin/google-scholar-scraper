@@ -14,7 +14,7 @@ class Spider:
         requests_delay: The delay between requests.
     """
 
-    name: Optional[str] = 'Spider'
+    name: Optional[str] = None
     start_urls: Optional[list[str]] = None
     extra_urls: Optional[list[str]] = None
     requests_delay: Optional[float] = .0
