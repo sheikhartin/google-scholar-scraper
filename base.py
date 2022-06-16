@@ -42,7 +42,7 @@ class Spider:
         if kwargs.get('extra_urls') is not None:
             self.extra_urls = kwargs.get('extra_urls')
 
-    def fetch(self) -> Generator[list[dict], None, None]:
+    def fetch(self) -> Generator[Any, None, None]:
         """Goes between all the specified URLs."""
         print(f'{self.name} started...')
         requests_count = 0
