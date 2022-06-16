@@ -14,10 +14,10 @@ class Spider:
         requests_delay: The delay between requests.
     """
 
-    name: Optional[str] = None
+    name: Optional[str] = 'Spider'
     start_urls: Optional[list[str]] = None
     extra_urls: Optional[list[str]] = None
-    requests_delay: Optional[float] = None
+    requests_delay: Optional[float] = .0
 
     def __init__(self) -> None:
         self.name = self.name if self.name is not None else self.__class__.__name__
