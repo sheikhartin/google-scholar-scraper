@@ -7,7 +7,7 @@ from requests_html import HTMLSession
 from base import Spider
 
 
-def build_query(**kwargs) -> str:
+def _build_articles_query(**kwargs) -> str:
     """Builds the articles and case law query from the given arguments."""
     keywords = f'q={kwargs.get("keywords").replace(" ", "+")}'
     year_range = f'as_ylo={kwargs.get("start_year")}&as_yhi={kwargs.get("end_year")}'
@@ -22,7 +22,7 @@ class GSArticlesSpider(Spider):
     requests_delay = .5
 
     def setup(self, *args, **kwargs):
-        query = build_query(**kwargs, extra='as_sdt=0,5')
+        query = _build_articles_query(**kwargs, extra='as_sdt=0,5')
         self.start_urls.append(f'https://scholar.google.com/scholar?{query}')
 
     def parse(self, response: HTMLSession) -> Generator[dict, None, None]:
@@ -38,7 +38,6 @@ class GSArticlesSpider(Spider):
             paper = article.xpath('//div[@class="gs_or_ggsm"]/a/@href', first=True)
             citations_no = article.xpath('//div[@class="gs_ri"]/div[@class="gs_fl"]/a[3][contains(., "Cited by")]', first=True)
             citations_no = int(citations_no.text.replace('Cited by ', '')) if citations_no is not None else 0
-
             yield {
                 'title': title,
                 'authors': authors,
@@ -62,7 +61,7 @@ class GSCaseLawSpider(Spider):
     requests_delay = .5
 
     def setup(self, *args, **kwargs):
-        query = build_query(**kwargs, extra='as_sdt=2006')
+        query = _build_articles_query(**kwargs, extra='as_sdt=2006')
         self.start_urls.append(f'https://scholar.google.com/scholar?{query}')
 
     def parse(self, response: HTMLSession) -> Generator[dict, None, None]:
@@ -79,7 +78,6 @@ class GSCaseLawSpider(Spider):
             source = f'https://scholar.google.com{source}' if source is not None else None
             citations_no = article.xpath('//div[@class="gs_ri"]/div[@class="gs_fl"]/a[3][contains(., "Cited by")]', first=True)
             citations_no = int(citations_no.text.replace('Cited by ', '')) if citations_no is not None else 0
-
             yield {
                 'title': title,
                 'case': case,
@@ -116,7 +114,6 @@ class GSProfilesSpider(Spider):
             year = article.xpath('//span[@class="gsc_a_h gsc_a_hc gs_ibl"]/text()', first=True)
             citations_no = article.xpath('//a[@class="gsc_a_ac gs_ibl"]', first=True)
             citations_no = int(citations_no.text) if citations_no is not None and citations_no.text else 0
-
             yield {
                 'title': title,
                 'authors': authors,
