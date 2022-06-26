@@ -1,6 +1,10 @@
 ## Google Scholar Scraper
 
-Unfortunately, Google Scholar does not support exporting results... I needed the most cited papers for a university research project, and after trying [a imperfect script](https://github.com/WittmannF/sort-google-scholar) I decided to write my own. Therefore, perfectionist is the philosophy of the project :see_no_evil:
+![GitHub repo status](https://img.shields.io/badge/status-active-green?style=flat)
+![GitHub contributors](https://img.shields.io/github/contributors/sheikhartin/google-scholar-scraper)
+![GitHub repo size](https://img.shields.io/github/repo-size/sheikhartin/google-scholar-scraper)
+
+Unfortunately, Google Scholar does not support exporting results... I needed the most cited papers for a university research project, and after trying [a imperfect script](https://github.com/wittmannf/sort-google-scholar) I decided to write my own. <!-- Therefore, perfectionist is the philosophy of the project :see_no_evil: -->
 
 <b>Important note</b>: The spiders don't send more than 2 requests per second to Google Scholar. The reason is that we don't like to solve the CAPTCHA, so it's better to wait a little bit and acting like a human. Changing IP address sometimes is a good idea :weary:
 
@@ -15,7 +19,7 @@ Unfortunately, Google Scholar does not support exporting results... I needed the
 - [x] Searches in a profile by ID
 - [ ] Graphical interface
 
-![A shocked skeleton!](https://media.giphy.com/media/MuTenSRsJ7TQQ/giphy.gif)
+![A shocked skeleton](https://media.giphy.com/media/MuTenSRsJ7TQQ/giphy.gif)
 
 ### Usage
 
