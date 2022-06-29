@@ -19,7 +19,7 @@ class Spider:
     name: Optional[str] = None
     start_urls: Optional[list[str]] = []
     extra_urls: Optional[list[str]] = []
-    requests_delay: Optional[Union[int, float]] = .0
+    requests_delay: Optional[Union[int, float]] = 0
 
     def __init__(self) -> None:
         self.name = self.name if self.name is not None else self.__class__.__name__
@@ -80,7 +80,7 @@ def _build_articles_query(**kwargs) -> str:
 class GSArticlesSpider(Spider):
     """Google Scholar articles category spider."""
 
-    # name = 'Google Scholar articles spider'
+    name = 'Google Scholar articles spider'
     requests_delay = .5
 
     def setup(self, *args, **kwargs):
@@ -119,7 +119,7 @@ class GSArticlesSpider(Spider):
 class GSCaseLawSpider(Spider):
     """Google Scholar case law category spider."""
 
-    # name = 'Google Scholar case law spider'
+    name = 'Google Scholar case law spider'
     requests_delay = .5
 
     def setup(self, *args, **kwargs):
@@ -158,7 +158,7 @@ class GSCaseLawSpider(Spider):
 class GSProfilesSpider(Spider):
     """Google Scholar profiles category spider."""
 
-    # name = 'Google Scholar profiles spider'
+    name = 'Google Scholar profiles spider'
     requests_delay = .5
 
     def setup(self, *args, **kwargs):
@@ -202,15 +202,15 @@ if __name__ == '__main__':
     import pandas as pd
 
     parser = argparse.ArgumentParser(description='Scrapes Google Scholar for articles, case law, and profiles.')
-    parser.add_argument('keywords', type=str, help='The keywords to search for')
-    parser.add_argument('-c', '--case-law', action='store_true', help='Search for case law')
-    parser.add_argument('-p', '--profiles', action='store_true', help='Search for a profile articles')
-    parser.add_argument('-s', '--start-year', type=int, help='The start year')
-    parser.add_argument('-e', '--end-year', type=int, help='The end year')
-    parser.add_argument('-l', '--languages', nargs='+', default=['en'], help='Allowed languages (default: en)')
-    parser.add_argument('-o', '--output', type=str, default='output.csv', help='The output file (default: output.csv)')
-    parser.add_argument('-y', '--year', action='store_true', help='Sort by year')
-    parser.add_argument('-q', '--quiet', action='store_true', help='Do not print progress')
+    parser.add_argument('keywords', type=str, help='the keywords to search for')
+    parser.add_argument('-c', '--case-law', action='store_true', help='search for case law')
+    parser.add_argument('-p', '--profiles', action='store_true', help='search for a profile articles')
+    parser.add_argument('-s', '--start-year', type=int, help='the start year')
+    parser.add_argument('-e', '--end-year', type=int, help='the end year')
+    parser.add_argument('-l', '--languages', nargs='+', default=['en'], help='allowed languages (default: en)')
+    parser.add_argument('-o', '--output', type=str, default='output.csv', help='the output file (default: output.csv)')
+    parser.add_argument('-y', '--year', action='store_true', help='sort by year')
+    parser.add_argument('-q', '--quiet', action='store_true', help='do not print progress')
     args = parser.parse_args()
 
     if args.quiet:
@@ -240,6 +240,8 @@ if __name__ == '__main__':
     else:
         results.sort_values('citations no.', ascending=False, inplace=True)
     # results[['year', 'citations no.']] = results[['year', 'citations no.']].fillna('n/a')
+    # results['year'] = results['citations no.'].astype('int32')
+    # results['citations no.'] = results['citations no.'].astype('int64')
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     results.to_csv(args.output, index=False)
