@@ -1,7 +1,9 @@
 ## Google Scholar Scraper
 
 ![GitHub repo status](https://img.shields.io/badge/status-active-green?style=flat)
+![GitHub license](https://img.shields.io/github/license/sheikhartin/google-scholar-scraper)
 ![GitHub contributors](https://img.shields.io/github/contributors/sheikhartin/google-scholar-scraper)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/sheikhartin/google-scholar-scraper)
 ![GitHub repo size](https://img.shields.io/github/repo-size/sheikhartin/google-scholar-scraper)
 
 Unfortunately, Google Scholar does not support exporting results... I needed the most cited papers for a university research project, and after trying [a imperfect script](https://github.com/wittmannf/sort-google-scholar) I decided to write my own. <!-- Therefore, perfectionist is the philosophy of the project :see_no_evil: -->
