@@ -73,7 +73,7 @@ def _build_articles_query(**kwargs) -> str:
     """Builds the articles and case law query from the given arguments."""
     keywords = f'q={kwargs.get("keywords").replace(" ", "+")}'
     year_range = f'as_ylo={kwargs.get("start_year")}&as_yhi={kwargs.get("end_year")}'
-    languages = f'lr={"|".join([f"lang_{l}" for l in kwargs.get("languages")])}'
+    languages = f'lr={"|".join([f"lang_{l}" for l in kwargs.get("languages", [])])}'
     return f'hl=en&{keywords}&{year_range}&{languages}&{kwargs.get("extra", "")}'
 
 
