@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from time import sleep
-from typing import Optional, Union, Generator, Any
+from typing import Optional, Union, Generator, List, Any
 
 from requests_html import HTMLSession
 
@@ -17,8 +17,8 @@ class Spider:
     """
 
     name: Optional[str] = None
-    start_urls: Optional[list[str]] = []
-    extra_urls: Optional[list[str]] = []
+    start_urls: Optional[List[str]] = []
+    extra_urls: Optional[List[str]] = []
     requests_delay: Optional[Union[int, float]] = 0
 
     def __init__(self) -> None:
