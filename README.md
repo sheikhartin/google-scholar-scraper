@@ -8,7 +8,7 @@
 
 Unfortunately, Google Scholar does not support exporting results... I needed the most cited papers for a university research project, and after trying [a imperfect script](https://github.com/wittmannf/sort-google-scholar) I decided to write my own. <!-- Therefore, perfectionist is the philosophy of the project :see_no_evil: -->
 
-<b>Important note</b>: The spiders don't send more than 2 requests per second to Google Scholar. The reason is that we don't like to solve the CAPTCHA, so it's better to wait a little bit and acting like a human. Changing IP address sometimes is a good idea :weary:
+<b>Important note</b>: The spiders don't send more than 2 requests per second to Google Scholar. The reason is that we don't like to solve the CAPTCHA, so it's better to wait a little bit and acting like a human. Changing IP address sometimes is a good idea... :weary:
 
 ### Features
 
