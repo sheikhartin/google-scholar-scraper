@@ -6,9 +6,9 @@
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/sheikhartin/google-scholar-scraper)
 ![GitHub repo size](https://img.shields.io/github/repo-size/sheikhartin/google-scholar-scraper)
 
-Unfortunately, Google Scholar does not support exporting results... I needed the most cited papers for a university research project, and after trying [a imperfect script](https://github.com/wittmannf/sort-google-scholar) I decided to write my own. <!-- Therefore, perfectionist is the philosophy of the project :see_no_evil: -->
+Unfortunately, Google Scholar does not support exporting results... I needed the most cited papers for a research project, and after trying [an imperfect script](https://github.com/wittmannf/sort-google-scholar) I decided to write my own. <!-- Therefore, perfectionist is the philosophy of the project :see_no_evil: -->
 
-<b>Important note</b>: The spiders don't send more than 2 requests per second to Google Scholar. The reason is that we don't like to solve the CAPTCHA, so it's better to wait a little bit and acting like a human. Changing IP address sometimes is a good idea... :weary:
+_Important note: The spiders don't send more than 2 requests per second to Google Scholar. The reason is that we don't like to solve the CAPTCHA, so it's better to wait a little and acting like a human. Changing IP address sometimes is a good idea..._ :weary:
 
 ### Features
 
@@ -73,7 +73,7 @@ Get a specific profile articles by the user ID:
 python core.py "nms69lqaaaaj" -p -o jeff_dean_articles.csv
 ```
 
-Make the program quit:
+Make the program quiet:
 
 ```bash
 python core.py "philosophy" -e 1234 -q
