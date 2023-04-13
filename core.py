@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import re
 from time import sleep
 from typing import Optional, Union, Generator, List, Any
 
@@ -91,15 +92,15 @@ class GSArticlesSpider(Spider):
         articles = response.html.xpath('//div[@class="gs_r gs_or gs_scl"]')
         for article in articles:
             title = article.xpath('//h3[@class="gs_rt"]/a | .//h3[@class="gs_rt"]/span[2]', first=True).text
-            metadata = article.xpath('//div[@class="gs_a"]', first=True).text
-            metadata = list(map(lambda x: x.strip(), metadata.replace('\xa0', '').split('- ')))
-            authors = metadata[0]
-            year = metadata[1][-4:]
-            year = int(year) if len(year) == 4 and year.isnumeric() else None
+            snippet = article.xpath('//div[@class="gs_a"]', first=True).text
+            snippet = [elem.strip() for elem in snippet.replace('\xa0', '').split('- ')]
+            authors = snippet[0]
+            year = re.search(r'\d{4,}$', snippet[-2]) or re.search(r'\d{4,}$', snippet[-1])
+            year = year.group() if year is not None else None
             source = article.xpath('//h3[@class="gs_rt"]/a/@href', first=True)
             paper = article.xpath('//div[@class="gs_or_ggsm"]/a/@href', first=True)
             citations_no = article.xpath('//div[@class="gs_ri"]/div[@class="gs_fl"]/a[3][contains(., "Cited by")]', first=True)
-            citations_no = int(citations_no.text.replace('Cited by ', '')) if citations_no is not None else 0
+            citations_no = citations_no.text.replace('Cited by ', '') if citations_no is not None else None
             yield {
                 'title': title,
                 'authors': authors,
@@ -130,19 +131,19 @@ class GSCaseLawSpider(Spider):
         articles = response.html.xpath('//div[@class="gs_r gs_or gs_scl"]')
         for article in articles:
             title = article.xpath('//h3[@class="gs_rt"]/a | .//h3[@class="gs_rt"]/span[2]', first=True).text
-            metadata = article.xpath('//div[@class="gs_a"]', first=True).text
-            metadata = list(map(lambda x: x.strip(), metadata.replace('\xa0', '').split('- ')))
-            year = metadata[1][-4:]
-            year = int(year) if len(year) == 4 and year.isnumeric() else None
-            case = ' - '.join(metadata[:2]) if len(metadata) > 1 else metadata[0]
-            case = case[:-6] if year is not None else case
+            snippet = article.xpath('//div[@class="gs_a"]', first=True).text
+            snippet = [elem.strip() for elem in snippet.replace('\xa0', '').split('- ')]
+            year = re.search(r'\d{4,}$', snippet[-2]) or re.search(r'\d{4,}$', snippet[-1])
+            year = year.group() if year is not None else None
+            case_ = ' - '.join(snippet[:2]) if len(snippet) > 1 else snippet[0]
+            case_ = re.split(r' ?[\-,] \d+$', case_)[0] if case_ is not None else None
             source = article.xpath('//h3[@class="gs_rt"]/a/@href', first=True)
             source = f'https://scholar.google.com{source}' if source is not None else None
             citations_no = article.xpath('//div[@class="gs_ri"]/div[@class="gs_fl"]/a[3][contains(., "Cited by")]', first=True)
-            citations_no = int(citations_no.text.replace('Cited by ', '')) if citations_no is not None else 0
+            citations_no = citations_no.text.replace('Cited by ', '') if citations_no is not None else None
             yield {
                 'title': title,
-                'case': case,
+                'case': case_,
                 'year': year,
                 'source': source,
                 'citations no.': citations_no,
@@ -175,7 +176,7 @@ class GSProfilesSpider(Spider):
             source = f'https://scholar.google.com{source}' if source is not None else None
             year = article.xpath('//span[@class="gsc_a_h gsc_a_hc gs_ibl"]/text()', first=True)
             citations_no = article.xpath('//a[@class="gsc_a_ac gs_ibl"]', first=True)
-            citations_no = int(citations_no.text) if citations_no is not None and citations_no.text else 0
+            citations_no = int(citations_no.text) if citations_no is not None and citations_no.text else None
             yield {
                 'title': title,
                 'authors': authors,
@@ -239,9 +240,6 @@ if __name__ == '__main__':
         results.sort_values('year', ascending=False, inplace=True)
     else:
         results.sort_values('citations no.', ascending=False, inplace=True)
-    # results[['year', 'citations no.']] = results[['year', 'citations no.']].fillna('n/a')
-    # results['year'] = results['citations no.'].astype('int32')
-    # results['citations no.'] = results['citations no.'].astype('int64')
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     results.to_csv(args.output, index=False)
