@@ -136,7 +136,7 @@ class GSCaseLawSpider(Spider):
             year = re.search(r'\d{4,}$', snippet[-2]) or re.search(r'\d{4,}$', snippet[-1])
             year = year.group() if year is not None else None
             case_ = ' - '.join(snippet[:2]) if len(snippet) > 1 else snippet[0]
-            case_ = re.split(r' ?[\-,] \d+$', case_)[0] if case_ is not None else None
+            case_ = re.split(r' ?[\-,] \d+$', case_)[0]
             source = article.xpath('//h3[@class="gs_rt"]/a/@href', first=True)
             source = f'https://scholar.google.com{source}' if source is not None else None
             citations_no = article.xpath('//div[@class="gs_ri"]/div[@class="gs_fl"]/a[3][contains(., "Cited by")]', first=True)
@@ -242,4 +242,12 @@ if __name__ == '__main__':
         results.sort_values('citations no.', ascending=False, inplace=True)
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-    results.to_csv(args.output, index=False)
+    if args.output.endswith('.csv'):
+        results.to_csv(args.output, index=False)
+    elif args.output.endswith('.json'):
+        results.to_json(args.output, indent=4)
+    elif args.output.endswith('.html'):
+        results.to_html(args.output)
+    else:
+        print('The format is not supported, but I will print the results on the screen...')
+        print(results.to_string())
