@@ -84,7 +84,7 @@ class GSArticlesSpider(Spider):
     name = 'Google Scholar articles spider'
     requests_delay = .5
 
-    def setup(self, *args, **kwargs):
+    def setup(self, *args, **kwargs) -> None:
         query = _build_articles_query(**kwargs, extra='as_sdt=0,5')
         self.start_urls.append(f'https://scholar.google.com/scholar?{query}')
 
@@ -124,7 +124,7 @@ class GSCaseLawSpider(Spider):
     name = 'Google Scholar case law spider'
     requests_delay = .5
 
-    def setup(self, *args, **kwargs):
+    def setup(self, *args, **kwargs) -> None:
         query = _build_articles_query(**kwargs, extra='as_sdt=2006')
         self.start_urls.append(f'https://scholar.google.com/scholar?{query}')
 
@@ -164,7 +164,7 @@ class GSProfilesSpider(Spider):
     name = 'Google Scholar profiles spider'
     requests_delay = .5
 
-    def setup(self, *args, **kwargs):
+    def setup(self, *args, **kwargs) -> None:
         query = f'hl=en&user={kwargs.get("keywords")}&cstart=0&pagesize=100'
         self.start_urls.append(f'https://scholar.google.com/citations?{query}')
         self.cstart = 0
