@@ -95,12 +95,12 @@ class GSArticlesSpider(Spider):
             snippet = article.xpath('//div[@class="gs_a"]', first=True).text
             snippet = [elem.strip() for elem in snippet.replace('\xa0', '').split('- ')]
             authors = snippet[0]
-            if year := None and len(snippet) >= 2:
+            if year := None or len(snippet) >= 2:
                 year = re.search(r'\d{4,}$', snippet[-2]) or re.search(r'\d{4,}$', snippet[-1])
                 year = year.group() if year is not None else None
             source = article.xpath('//h3[@class="gs_rt"]/a/@href', first=True)
             paper = article.xpath('//div[@class="gs_or_ggsm"]/a/@href', first=True)
-            citations_no = article.xpath('//div[@class="gs_ri"]/div[@class="gs_fl"]/a[3][contains(., "Cited by")]', first=True)
+            citations_no = article.xpath('//div[@class="gs_ri"]/div[contains(@class, "gs_fl")]/a[3][contains(., "Cited by")]', first=True)
             citations_no = citations_no.text.replace('Cited by ', '') if citations_no is not None else None
             yield {
                 'title': title,
@@ -134,14 +134,14 @@ class GSCaseLawSpider(Spider):
             title = article.xpath('//h3[@class="gs_rt"]/a | .//h3[@class="gs_rt"]/span[2]', first=True).text
             snippet = article.xpath('//div[@class="gs_a"]', first=True).text
             snippet = [elem.strip() for elem in snippet.replace('\xa0', '').split('- ')]
-            if year := None and len(snippet) >= 2:
+            if year := None or len(snippet) >= 2:
                 year = re.search(r'\d{4,}$', snippet[-2]) or re.search(r'\d{4,}$', snippet[-1])
                 year = year.group() if year is not None else None
             case_ = ' - '.join(snippet[:2]) if len(snippet) > 1 else snippet[0]
             case_ = re.split(r' ?[\-,] \d+$', case_)[0]
             source = article.xpath('//h3[@class="gs_rt"]/a/@href', first=True)
             source = f'https://scholar.google.com{source}' if source is not None else None
-            citations_no = article.xpath('//div[@class="gs_ri"]/div[@class="gs_fl"]/a[3][contains(., "Cited by")]', first=True)
+            citations_no = article.xpath('//div[@class="gs_ri"]/div[contains(@class, "gs_fl")]/a[3][contains(., "Cited by")]', first=True)
             citations_no = citations_no.text.replace('Cited by ', '') if citations_no is not None else None
             yield {
                 'title': title,
